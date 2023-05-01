@@ -45,7 +45,7 @@ app.get('/activity-groups/:id', async (req, res) => {
         res.status(200).json({
             status: 'Success',
             message: 'Success',
-            data: rows,
+            data: rows[0],
         });
     } catch (err) {
         return res.status(500).json({ message: err.message });
@@ -74,17 +74,27 @@ app.post('/activity-groups', async (req, res) => {
         res.status(201).json({
             status: 'Success',
             message: 'Success',
-            data: row,
+            data: row[0],
         });
     } catch (err) {
-        return res
-            .status(500)
-            .json({ status: 'Bad Request', message: err.message });
+        return res.status(500).json({ message: err.message });
     }
 });
 
 app.patch('/activity-groups/:id', async (req, res) => {
     try {
+        // Check if data not found
+        const [rows] = await db.query(
+            `SELECT activity_id AS id, title, email, created_at AS createdAt, updated_at AS updatedAt FROM activities WHERE activity_id = ?`,
+            [req.params.id]
+        );
+        if (rows.length === 0) {
+            return res.status(404).json({
+                status: 'Not Found',
+                message: `Activity with ID ${req.params.id} Not Found`,
+            });
+        }
+
         if (!req.body.title) {
             return res.status(400).json({
                 status: 'Bad Request',
@@ -97,13 +107,6 @@ app.patch('/activity-groups/:id', async (req, res) => {
             [req.body.title, req.params.id]
         );
 
-        if (updated.affectedRows === 0) {
-            return res.status(404).json({
-                status: 'Not Found',
-                message: `Activity with ID ${req.params.id} Not Found`,
-            });
-        }
-
         const [row] = await db.query(
             `SELECT activity_id AS id, title, email, created_at AS createdAt, updated_at AS updatedAt FROM activities WHERE activity_id = ?`,
             [req.params.id]
@@ -112,7 +115,7 @@ app.patch('/activity-groups/:id', async (req, res) => {
         res.status(200).json({
             status: 'Success',
             message: 'Success',
-            data: row,
+            data: row[0],
         });
     } catch (err) {
         return res.status(500).json({ message: err.message });
@@ -121,17 +124,21 @@ app.patch('/activity-groups/:id', async (req, res) => {
 
 app.delete('/activity-groups/:id', async (req, res) => {
     try {
-        const [deleted] = await db.query(
-            `DELETE FROM activities WHERE activity_id = ?`,
+        // Check if data not found
+        const [rows] = await db.query(
+            `SELECT activity_id AS id, title, email, created_at AS createdAt, updated_at AS updatedAt FROM activities WHERE activity_id = ?`,
             [req.params.id]
         );
-
-        if (deleted.affectedRows === 0) {
+        if (rows.length === 0) {
             return res.status(404).json({
                 status: 'Not Found',
                 message: `Activity with ID ${req.params.id} Not Found`,
             });
         }
+        const [deleted] = await db.query(
+            `DELETE FROM activities WHERE activity_id = ?`,
+            [req.params.id]
+        );
 
         res.status(200).json({
             status: 'Success',
@@ -186,7 +193,7 @@ app.get('/todo-items/:id', async (req, res) => {
         res.status(200).json({
             status: 'Success',
             message: 'Success',
-            data: rows,
+            data: rows[0],
         });
     } catch (err) {
         return res.status(500).json({ message: err.message });
@@ -195,20 +202,30 @@ app.get('/todo-items/:id', async (req, res) => {
 
 app.post('/todo-items', async (req, res) => {
     try {
-        if (
-            !req.body.title ||
-            !req.body.activity_group_id ||
-            !req.body.is_active
-        ) {
+        if (!req.body.title) {
             return res.status(400).json({
                 status: 'Bad Request',
                 message: 'title cannot be null',
             });
         }
-        const [insert] = await db.query(
-            `INSERT INTO todos(title,activity_group_id,is_active) VALUES(?,?,?)`,
-            [req.body.title, req.body.activity_group_id, req.body.is_active]
-        );
+        if (!req.body.activity_group_id) {
+            return res.status(400).json({
+                status: 'Bad Request',
+                message: 'activity_group_id cannot be null',
+            });
+        }
+        var insert = null;
+        if (req.body.is_active != undefined) {
+            [insert] = await db.query(
+                `INSERT INTO todos(title,activity_group_id,is_active) VALUES(?,?,?)`,
+                [req.body.title, req.body.activity_group_id, req.body.is_active]
+            );
+        } else {
+            [insert] = await db.query(
+                `INSERT INTO todos(title,activity_group_id) VALUES(?,?)`,
+                [req.body.title, req.body.activity_group_id]
+            );
+        }
         const insertedId = insert.insertId;
 
         const [row] = await db.query(
@@ -219,7 +236,7 @@ app.post('/todo-items', async (req, res) => {
         res.status(201).json({
             status: 'Success',
             message: 'Success',
-            data: row,
+            data: row[0],
         });
     } catch (err) {
         return res.status(500).json({ message: err.message });
@@ -269,7 +286,7 @@ app.patch('/todo-items/:id', async (req, res) => {
         res.status(200).json({
             status: 'Success',
             message: 'Success',
-            data: row,
+            data: row[0],
         });
     } catch (err) {
         return res.status(500).json({ message: err.message });

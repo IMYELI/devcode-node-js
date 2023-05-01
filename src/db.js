@@ -1,15 +1,16 @@
 const mysql = require('mysql2/promise');
 
-// koneksi ke database
-const db = mysql.createPool({
-    host: process.env.MYSQL_HOST || 'localhost',
+const cred = {
+    host: process.env.MYSQL_HOST || 'host.docker.internal',
     user: process.env.MYSQL_USER || 'root',
-    database: process.env.MYSQL_DBNAME || 'todolist',
-    password: process.env.MYSQL_PASSWORD || 'root',
+    database: process.env.MYSQL_DBNAME || 'todo4',
+    password: process.env.MYSQL_PASSWORD || '',
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0,
-});
+};
+// koneksi ke database
+const db = mysql.createPool(cred);
 
 // migrasi database
 const migration = async () => {
@@ -34,16 +35,17 @@ const migration = async () => {
                 activity_group_id int not null,
                 title varchar(255) not null,
                 priority varchar(255) not null DEFAULT "very-high",
-                is_active boolean not null,
+                is_active boolean DEFAULT true not null,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                primary key (todo_id),
-                FOREIGN KEY(activity_group_id) REFERENCES activities(activity_id)
+                primary key (todo_id)
                 )
             `
         );
         console.log('Running Migration Successfully!');
     } catch (err) {
+        console.log('An error occured when running migration');
+        console.log(err.message);
         throw err;
     }
 };
