@@ -35,7 +35,7 @@ const migration = async () => {
                 activity_group_id int not null,
                 title varchar(255) not null,
                 priority varchar(255) not null DEFAULT "very-high",
-                is_active boolean DEFAULT true not null,
+                is_active BOOLEAN DEFAULT true not null,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 primary key (todo_id)

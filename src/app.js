@@ -240,6 +240,8 @@ app.post('/todo-items', async (req, res) => {
             [insertedId]
         );
 
+        row[0].is_active = row.is_active === 1 ? true : false;
+
         res.status(201).json({
             status: 'Success',
             message: 'Success',
