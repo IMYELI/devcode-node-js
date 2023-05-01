@@ -215,44 +215,24 @@ app.post('/todo-items', async (req, res) => {
             });
         }
         var insert = null;
+        [insert] = await db.query(
+            `INSERT INTO todos(title,activity_group_id) VALUES(?,?)`,
+            [req.body.title, req.body.activity_group_id]
+        );
+
         if (req.body.is_active != undefined) {
-            if (req.body.priority == undefined) {
-                [insert] = await db.query(
-                    `INSERT INTO todos(title,activity_group_id,is_active) VALUES(?,?,?)`,
-                    [
-                        req.body.title,
-                        req.body.activity_group_id,
-                        req.body.is_active,
-                    ]
-                );
-            } else {
-                [insert] = await db.query(
-                    `INSERT INTO todos(title,activity_group_id,is_active,priority) VALUES(?,?,?,?)`,
-                    [
-                        req.body.title,
-                        req.body.activity_group_id,
-                        req.body.is_active,
-                        req.body.priority,
-                    ]
-                );
-            }
-        } else {
-            if (req.body.priority == undefined) {
-                [insert] = await db.query(
-                    `INSERT INTO todos(title,activity_group_id) VALUES(?,?)`,
-                    [req.body.title, req.body.activity_group_id]
-                );
-            } else {
-                [insert] = await db.query(
-                    `INSERT INTO todos(title,activity_group_id,priority) VALUES(?,?,?)`,
-                    [
-                        req.body.title,
-                        req.body.activity_group_id,
-                        req.body.priority,
-                    ]
-                );
-            }
+            await db.query(`UPDATE todos SET is_active = ? WHERE todo_id = ?`, [
+                req.body.is_active,
+                insert.insertId,
+            ]);
         }
+        if (req.body.priority != undefined) {
+            await db.query(`UPDATE todos SET priority = ? WHERE todo_id = ?`, [
+                req.body.priority,
+                insert.insertId,
+            ]);
+        }
+
         const insertedId = insert.insertId;
 
         const [row] = await db.query(
