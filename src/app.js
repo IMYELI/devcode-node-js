@@ -216,15 +216,42 @@ app.post('/todo-items', async (req, res) => {
         }
         var insert = null;
         if (req.body.is_active != undefined) {
-            [insert] = await db.query(
-                `INSERT INTO todos(title,activity_group_id,is_active) VALUES(?,?,?)`,
-                [req.body.title, req.body.activity_group_id, req.body.is_active]
-            );
+            if (req.body.priority == undefined) {
+                [insert] = await db.query(
+                    `INSERT INTO todos(title,activity_group_id,is_active) VALUES(?,?,?)`,
+                    [
+                        req.body.title,
+                        req.body.activity_group_id,
+                        req.body.is_active,
+                    ]
+                );
+            } else {
+                [insert] = await db.query(
+                    `INSERT INTO todos(title,activity_group_id,is_active,priority) VALUES(?,?,?,?)`,
+                    [
+                        req.body.title,
+                        req.body.activity_group_id,
+                        req.body.is_active,
+                        req.body.priority,
+                    ]
+                );
+            }
         } else {
-            [insert] = await db.query(
-                `INSERT INTO todos(title,activity_group_id) VALUES(?,?)`,
-                [req.body.title, req.body.activity_group_id]
-            );
+            if (req.body.priority == undefined) {
+                [insert] = await db.query(
+                    `INSERT INTO todos(title,activity_group_id) VALUES(?,?)`,
+                    [req.body.title, req.body.activity_group_id]
+                );
+            } else {
+                [insert] = await db.query(
+                    `INSERT INTO todos(title,activity_group_id,priority) VALUES(?,?,?)`,
+                    [
+                        req.body.title,
+                        req.body.activity_group_id,
+                        req.body.priority,
+                    ]
+                );
+            }
         }
         const insertedId = insert.insertId;
 
